@@ -19,7 +19,7 @@
 
 
 #include <Wire.h>
-#include "ov7670.h"
+#include "Adafruit_OV7670.h"
 
 
 // Need 8 MHz PWM out
@@ -32,7 +32,7 @@
 // It's on PB19, which is also TCC1/WO[1] or GCLK/IO[5]
 // SO, config up TCC1 for 8 MHz out on channel 1, set pinPeripheral to TCC
 
-OV7670 cam(OV7670_ADDR, -1, PIN_PCC_XCLK, TCC1);
+Adafruit_OV7670 cam(OV7670_ADDR, -1, PIN_PCC_XCLK, TCC1);
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);

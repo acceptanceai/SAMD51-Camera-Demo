@@ -1,17 +1,17 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include "wiring_private.h" // pinPeripheral() function
-#include "ov7670.h"
+#include "Adafruit_OV7670.h"
 
 // Also provide: reset pin (or -1), timer periph.
 
-OV7670::OV7670(uint8_t addr, int rst, int xclk_pin, void *timer) : i2c_address(addr & 0x7f), reset_pin(rst), xclk_pin(xclk_pin), xclk_timer(timer) {
+Adafruit_OV7670::Adafruit_OV7670(uint8_t addr, int rst, int xclk_pin, void *timer) : i2c_address(addr & 0x7f), reset_pin(rst), xclk_pin(xclk_pin), xclk_timer(timer) {
 }
 
-OV7670::~OV7670() {
+Adafruit_OV7670::~Adafruit_OV7670() {
 }
 
-bool OV7670::begin() {
+bool Adafruit_OV7670::begin() {
 
   static const struct {
     void *base;      // TC or TCC peripheral base address
@@ -145,7 +145,7 @@ bool OV7670::begin() {
   return true;
 }
 
-uint8_t OV7670::readRegister(uint8_t reg) {
+uint8_t Adafruit_OV7670::readRegister(uint8_t reg) {
   Wire.beginTransmission(i2c_address);
   Wire.write(reg);
   Wire.endTransmission();
@@ -153,7 +153,7 @@ uint8_t OV7670::readRegister(uint8_t reg) {
   return Wire.read();
 }
 
-void OV7670::writeRegister(uint8_t reg, uint8_t value) {
+void Adafruit_OV7670::writeRegister(uint8_t reg, uint8_t value) {
   Wire.beginTransmission(i2c_address);
   Wire.write(reg);
   Wire.write(value);
