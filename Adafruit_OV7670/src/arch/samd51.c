@@ -1,5 +1,3 @@
-#pragma once
-
 // For CircuitPython:
 #ifdef SAMD51
 #define __SAMD51__
@@ -7,5 +5,7 @@
 #endif
 
 #if defined(__SAMD51__)
-#endif // __SAMD51__
 
+// SAMD51-specific Timer, PCC, DMA periph setup here
+
+#endif // __SAMD51__

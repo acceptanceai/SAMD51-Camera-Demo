@@ -1,9 +1,4 @@
-#define OV7670_ADDR 0x21 // Default I2C address if unspecified
-
-#define OV7670_REG_COM7        0x12    /* Control 7 */
-#define OV7670_COM7_RESET      0x80    /* Register reset */
-#define OV7670_REG_PID         0x0a    /* Product ID MSB */
-#define OV7670_REG_VER         0x0b    /* Product ID LSB */
+#include "OV7670.h"
 
 class Adafruit_OV7670 {
  public:
