@@ -62,12 +62,6 @@ void setup() {
 
   cam.begin();
 
-  // Soft reset
-  cam.writeRegister(OV7670_REG_COM7, OV7670_COM7_RESET);
-  delay(500);
-  // SOFT RESET ALONE ISN'T ENOUGH. Camera's !reset pin should connect to
-  // Arduino reset, or use a digital pin & toggle manually (low, high).
-
   uint8_t pid = cam.readRegister(OV7670_REG_PID); // Should be 0x76
   uint8_t ver = cam.readRegister(OV7670_REG_VER); // Should be 0x73
 

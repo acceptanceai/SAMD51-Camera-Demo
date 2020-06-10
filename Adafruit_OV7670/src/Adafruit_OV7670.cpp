@@ -251,6 +251,9 @@ bool Adafruit_OV7670::begin() {
       ;
     pinPeripheral(xclk_pin, PIO_TIMER_ALT);
     // Note: sometimes might want PIO_TCC_PDEC instead, how to establish that?
+    // Will this need to be an obscure arg to the constructor? That's super
+    // specific to SAMD. So maybe the timer-related arguments to constuctor
+    // go in a platform-specific struct or something.
   } else {
     Tc *tc = (Tc *)timer[timer_list_index].base;
 
@@ -259,31 +262,31 @@ bool Adafruit_OV7670::begin() {
     pinPeripheral(xclk_pin, PIO_TIMER);
   }
 
+  // Unsure of camera startup time from beginning of input clock.
+  // Let's guess it's similar to tS:REG (300 ms) from datasheet.
+  delay(300);
+
   wire->begin();
   wire->setClock(100000); // Datasheet claims 400 KHz, but no, must be 100 KHz
-  delay(200);
 
   if (reset_pin >= 0) {
     // Hard reset
     pinMode(reset_pin, OUTPUT);
     digitalWrite(reset_pin, LOW);
-    delay(100);
+    delay(1);
     digitalWrite(reset_pin, HIGH);
-    delay(200);
   } else {
     // Soft reset, doesn't seem reliable, might just need more delay?
     writeRegister(OV7670_REG_COM7, OV7670_COM7_RESET);
-    delay(200);
   }
+  delay(1); // Datasheet: tS:RESET = 1 ms
 
   // Issue init sequence to camera
   for (int i = 0; i < (sizeof ov7670_init / sizeof ov7670_init[0]); i++) {
     Serial.println(i);
     writeRegister(ov7670_init[i].reg, ov7670_init[i].value);
   }
-  delay(300);
-
-  Serial.println("Foo!");
+  delay(300); // Datasheet: tS:REG = 300 ms (settling time = 10 frames)
 
   return true;
 }
