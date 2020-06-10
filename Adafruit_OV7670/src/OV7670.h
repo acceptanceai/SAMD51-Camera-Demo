@@ -66,6 +66,10 @@
 #define OV7670_MVFP_MIRROR 0x20      //< MVFP Mirror image
 #define OV7670_MVFP_VFLIP 0x10       //< MVFP Vertical flip
 #define OV7670_REG_LAEC 0x1F         //< Reserved
+#define OV7670_REG_ADCCTR0 0x20      //< ADC control
+#define OV7670_REG_ADCCTR1 0x21      //< Reserved
+#define OV7670_REG_ADCCTR2 0x22      //< Reserved
+#define OV7670_REG_ADCCTR3 0x23      //< Reserved
 #define OV7670_REG_AEW 0x24          //< AGC/AEC upper limit
 #define OV7670_REG_AEB 0x25          //< AGC/AEC lower limit
 #define OV7670_REG_VPT 0x26          //< AGC/AEC fast mode operating region
@@ -118,35 +122,58 @@
 #define OV7670_REG_COM17 0x42        //< Common control 17
 #define OV7670_COM17_AECWIN 0xC0     //< COM17 AEC window must match COM4
 #define OV7670_COM17_CBAR 0x08       //< COM17 DSP Color bar enable
+#define OV7670_REG_AWBC1 0x43        //< Reserved
+#define OV7670_REG_AWBC2 0x44        //< Reserved
+#define OV7670_REG_AWBC3 0x45        //< Reserved
+#define OV7670_REG_AWBC4 0x46        //< Reserved
+#define OV7670_REG_AWBC5 0x47        //< Reserved
+#define OV7670_REG_AWBC6 0x48        //< Reserved
 #define OV7670_REG_REG4B 0x4B        //< UV average enable
 #define OV7670_REG_DNSTH 0x4C        //< De-noise strength
-#define OV7670_REG_MATRIXC_BASE 0x4F //< Matrix coefficient base (1 of 6)
-#define OV7670_MATRIXC_LEN 6         //< Number of matrix coefficients
+#define OV7670_REG_MTX1 0x4F         //< Matrix coefficient 1
+#define OV7670_REG_MTX2 0x50         //< Matrix coefficient 2
+#define OV7670_REG_MTX3 0x51         //< Matrix coefficient 3
+#define OV7670_REG_MTX4 0x52         //< Matrix coefficient 4
+#define OV7670_REG_MTX5 0x53         //< Matrix coefficient 5
+#define OV7670_REG_MTX6 0x54         //< Matrix coefficient 6
 #define OV7670_REG_BRIGHT 0x55       //< Brightness control
 #define OV7670_REG_CONTRAS 0x56      //< Contrast control
 #define OV7670_REG_CONTRAS_CTR 0x57  //< Contrast center
 #define OV7670_REG_MTXS 0x58         //< Matrix coefficient sign
-#define OV7670_REG_LCC_BASE 0x62     //< Lens correction base (1 of 5)
-#define OV7670_LCC_LEN 5             //< Number of lens correction options
+#define OV7670_REG_LCC1 0x62         //< Lens correction option 1
+#define OV7670_REG_LCC2 0x63         //< Lens correction option 2
+#define OV7670_REG_LCC3 0x64         //< Lens correction option 3
+#define OV7670_REG_LCC4 0x65         //< Lens correction option 4
+#define OV7670_REG_LCC5 0x66         //< Lens correction option 5
 #define OV7670_REG_MANU 0x67         //< Manual U value
 #define OV7670_REG_MANV 0x68         //< Manual V value
 #define OV7670_REG_GFIX 0x69         //< Fix gain control
 #define OV7670_REG_GGAIN 0x6A        //< G channel AWB gain
 #define OV7670_REG_DBLV 0x6B         //< PLL & regulator control
-#define OV7670_REG_AWBCTR_BASE 0x6C  //< AWB control base (1 of 4)
-#define OV7670_AWBCTR_LEN 4          //< Number of AWB control registers
+#define OV7670_REG_AWBCTR3 0x6C      //< AWB control 3
+#define OV7670_REG_AWBCTR2 0x6D      //< AWB control 2
+#define OV7670_REG_AWBCTR1 0x6E      //< AWB control 1
+#define OV7670_REG_AWBCTR0 0x6F      //< AWB control 0
 #define OV7670_REG_SCALING_XSC 0x70  //< Test pattern X scaling
 #define OV7670_REG_SCALING_YSC 0x71  //< Test pattern Y scaling
 #define OV7670_REG_SCALINGDCW 0x72   //< DCW control
 #define OV7670_REG_SCALINGPCLK 0x73  //< DSP scale control clock divide
+#define OV7670_REG_REG74 0x74        //< Digital gain control
 #define OV7670_REG_REG76 0x76        //< Pixel correction
+#define OV7670_REG_SLOP 0x7A         //< Gamma curve highest segment slope
+#define OV7670_REG_GAM_BASE 0x7B     //< Gamma register base (1 of 15)
+#define OV7670_GAM_LEN 15            //< Number of gamma registers
 #define OV7670_R76_BLKPCOR 0x80      //< REG76 black pixel correction enable
 #define OV7670_R76_WHTPCOR 0x40      //< REG76 white pixel correction enable
 #define OV7670_REG_RGB444 0x8C       //< RGB 444 control
 #define OV7670_R444_ENABLE 0x02      //< RGB444 enable
 #define OV7670_R444_RGBX 0x01        //< RGB444 word format
+#define OV7670_REG_DM_LNL 0x92       //< Dummy line LSB
+#define OV7670_REG_LCC6 0x94         //< Lens correction option 6
+#define OV7670_REG_LCC7 0x95         //< Lens correction option 7
 #define OV7670_REG_HAECC1 0x9F       //< Histogram-based AEC/AGC control 1
 #define OV7670_REG_HAECC2 0xA0       //< Histogram-based AEC/AGC control 2
+#define OV7670_REG_SPD 0xA2          //< Scaling pixel clock delay
 #define OV7670_REG_BD50MAX 0xA5      //< 50 Hz banding step limit
 #define OV7670_REG_HAECC3 0xA6       //< Histogram-based AEC/AGC control 3
 #define OV7670_REG_HAECC4 0xA7       //< Histogram-based AEC/AGC control 4
@@ -154,3 +181,5 @@
 #define OV7670_REG_HAECC6 0xA9       //< Histogram-based AEC/AGC control 6
 #define OV7670_REG_HAECC7 0xAA       //< Histogram-based AEC/AGC control 7
 #define OV7670_REG_BD60MAX 0xAB      //< 60 Hz banding step limit
+#define OV7670_REG_ABLC1 0xB1        //< ABLC enable
+#define OV7670_REG_THL_ST 0xB3       //< ABLC target
