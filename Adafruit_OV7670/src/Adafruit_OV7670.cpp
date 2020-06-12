@@ -2,6 +2,12 @@
 #include "wiring_private.h" // pinPeripheral() function
 #include <Arduino.h>
 #include <Wire.h>
+#include <Adafruit_ZeroDMA.h>
+
+Adafruit_ZeroDMA pccDMA;
+DmacDescriptor  *pccDesc1;
+ZeroDMAstatus    stat;
+uint16_t         datamem[320 * 240]; // ~150KB
 
 Adafruit_OV7670::Adafruit_OV7670(uint8_t addr, int rst, int xclk_pin,
                                  void *timer, TwoWire *twi)
@@ -132,6 +138,11 @@ static const struct {
     {OV7670_REG_CONTRAS, 0x40},
     {OV7670_REG_CONTRAS_CTR, 0x80}, // 0x40?
 };
+
+void startPCC() {
+  stat = pccDMA.startJob();
+  //detachInterrupt(PIN_PCC_DEN1);
+}
 
 bool Adafruit_OV7670::begin() {
 
@@ -283,10 +294,48 @@ bool Adafruit_OV7670::begin() {
 
   // Issue init sequence to camera
   for (int i = 0; i < (sizeof ov7670_init / sizeof ov7670_init[0]); i++) {
-    Serial.println(i);
     writeRegister(ov7670_init[i].reg, ov7670_init[i].value);
   }
   delay(300); // Datasheet: tS:REG = 300 ms (settling time = 10 frames)
+
+  // Set up PCC peripheral --------
+
+  MCLK->APBDMASK.reg |= MCLK_APBDMASK_PCC;
+
+  pinPeripheral(PIN_PCC_CLK, PIO_PCC);  // Camera PCLK
+  pinPeripheral(PIN_PCC_DEN1, PIO_PCC); // Camera VSYNC
+  pinPeripheral(PIN_PCC_DEN2, PIO_PCC); // Camera HSYNC
+  pinPeripheral(PIN_PCC_D0, PIO_PCC);
+  pinPeripheral(PIN_PCC_D1, PIO_PCC);
+  pinPeripheral(PIN_PCC_D2, PIO_PCC);
+  pinPeripheral(PIN_PCC_D3, PIO_PCC);
+  pinPeripheral(PIN_PCC_D4, PIO_PCC);
+  pinPeripheral(PIN_PCC_D5, PIO_PCC);
+  pinPeripheral(PIN_PCC_D6, PIO_PCC);
+  pinPeripheral(PIN_PCC_D7, PIO_PCC);
+
+  PCC->MR.reg = PCC_MR_ISIZE(0x00) // 8 bit data
+              | PCC_MR_DSIZE(0x02) // 32 bits per transfer
+              | PCC_MR_CID(0x01);  // reset on falling edge of DEN1 (vsync)
+  PCC->MR.bit.PCEN = 1;            // enable
+
+  // Set up PCC DMA ---------------
+
+  memset(datamem, 0, sizeof datamem);
+
+  pccDMA.setTrigger(PCC_DMAC_ID_RX);
+  pccDMA.setAction(DMA_TRIGGER_ACTON_BEAT);
+  stat = pccDMA.allocate();
+
+  pccDesc1 = pccDMA.addDescriptor(
+               (void *)(&PCC->RHR.reg), // move data from here
+               datamem,                 // to here
+               320 * 240,               // this many...
+               DMA_BEAT_SIZE_WORD,      // bytes/hword/words
+               false,                   // increment source addr?
+               true);                   // increment dest addr?
+
+  attachInterrupt(PIN_PCC_DEN1, startPCC, FALLING);
 
   return true;
 }
