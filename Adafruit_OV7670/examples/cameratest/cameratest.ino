@@ -21,7 +21,7 @@
 #include <Wire.h>
 #include "Adafruit_OV7670.h"
 
-extern uint16_t *datamem;
+extern volatile uint16_t *datamem;
 
 // Need 8 MHz PWM out
 // This goes to XCLK and runs continuously
@@ -73,9 +73,10 @@ void setup() {
 }
 
 void loop() {
-  Serial.println(datamem[119 * 320 + 160], HEX); // Center-ish pixel in datamem[]
+  Serial.println(datamem[119 * 320 + 159], HEX); // Center-ish pixel in datamem[]
+return;
   digitalWrite(LED_BUILTIN, HIGH);
-//  delay(100);
+  delay(100);
   digitalWrite(LED_BUILTIN, LOW);
-//  delay(100);
+  delay(100);
 }

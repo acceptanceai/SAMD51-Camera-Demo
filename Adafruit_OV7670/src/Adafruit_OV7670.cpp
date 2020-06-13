@@ -4,10 +4,10 @@
 #include <Wire.h>
 #include <Adafruit_ZeroDMA.h>
 
-Adafruit_ZeroDMA pccDMA;
-DmacDescriptor  *pccDesc1;
-ZeroDMAstatus    stat;
-uint16_t         datamem[320 * 240]; // ~150KB
+Adafruit_ZeroDMA  pccDMA;
+DmacDescriptor   *pccDesc1;
+ZeroDMAstatus     stat;
+volatile uint16_t datamem[320 * 240]; // ~150KB
 
 Adafruit_OV7670::Adafruit_OV7670(uint8_t addr, int rst, int xclk_pin,
                                  void *timer, TwoWire *twi)
@@ -142,6 +142,16 @@ static const struct {
 void startPCC() {
   stat = pccDMA.startJob();
   //detachInterrupt(PIN_PCC_DEN1);
+//  Serial.println("BLAT!");
+}
+
+void PCC_Handler() {
+  (void)pccDMA.startJob();
+  Serial.println("VSYNC");
+}
+
+void callback(Adafruit_ZeroDMA *dma) {
+  Serial.println("END");
 }
 
 bool Adafruit_OV7670::begin() {
@@ -292,20 +302,54 @@ bool Adafruit_OV7670::begin() {
   }
   delay(1); // Datasheet: tS:RESET = 1 ms
 
+Serial.println("0"); Serial.flush();
   // Issue init sequence to camera
   for (int i = 0; i < (sizeof ov7670_init / sizeof ov7670_init[0]); i++) {
+    Serial.println(i);
     writeRegister(ov7670_init[i].reg, ov7670_init[i].value);
   }
   delay(300); // Datasheet: tS:REG = 300 ms (settling time = 10 frames)
 
   // Set up PCC peripheral --------
 
-  MCLK->APBDMASK.reg |= MCLK_APBDMASK_PCC;
+/* Setup sequence from SAMD51 datasheet
+With DMAC
+1. Write the Interrupt Enable and Interrupt Disable Registers (IER and IDR) in order to configure the PCC interrupt mask.
+2. Configure DMAC transfer in the DMAC registers.
+3. Write the Mode Register (MR) fields ISIZE, SCALE, DSIZE, ALWYS, HALFS and FRSTS in order to
+configure the PCC. Do not enable the PCC in this write access.
+4. Write the PCC Enable bit in the Mode Register (MR.PCEN) to '1' in order to enable the PCC. Do not change the configuration from the previous step.
+5. Wait for end of transfer, indicated by the interrupt corresponding the End Receive flag in the Interrupt Status Register (ISR.ENDRX).
+6. Check the Overrun Error flag (ISR.OVRE).
+7. If a new buffer transfer is expected, go to step 5.
+8. Disable the PCC by writing MR.PCEN to '0' without changing the configuration.
+*/
 
+Serial.println("1"); Serial.flush();
+//  MCLK->APBDMASK.bit.PCC_ = 1; // Enable PCC clock
+
+  // Interrupts aren't used, DMA transfer callback should suffice
+  //PCC->IMR.bit.ENDRX = 1; // End-of-reception-transfer interrupt enable
+  //PCC->IMR.bit.DRDY = 1;  // Data-ready interrupt enable
+
+Serial.println("2"); Serial.flush();
+#if 1
+  pinMode(PIN_PCC_CLK, INPUT);  // Camera PCLK
+  pinMode(PIN_PCC_DEN1, INPUT); // Camera VSYNC
+  pinMode(PIN_PCC_DEN2, INPUT); // Camera HSYNC
+  pinMode(PIN_PCC_D0, INPUT);   // Camera data
+  pinMode(PIN_PCC_D1, INPUT);
+  pinMode(PIN_PCC_D2, INPUT);
+  pinMode(PIN_PCC_D3, INPUT);
+  pinMode(PIN_PCC_D4, INPUT);
+  pinMode(PIN_PCC_D5, INPUT);
+  pinMode(PIN_PCC_D6, INPUT);
+  pinMode(PIN_PCC_D7, INPUT);
+#endif
   pinPeripheral(PIN_PCC_CLK, PIO_PCC);  // Camera PCLK
   pinPeripheral(PIN_PCC_DEN1, PIO_PCC); // Camera VSYNC
   pinPeripheral(PIN_PCC_DEN2, PIO_PCC); // Camera HSYNC
-  pinPeripheral(PIN_PCC_D0, PIO_PCC);
+  pinPeripheral(PIN_PCC_D0, PIO_PCC);   // Camera data
   pinPeripheral(PIN_PCC_D1, PIO_PCC);
   pinPeripheral(PIN_PCC_D2, PIO_PCC);
   pinPeripheral(PIN_PCC_D3, PIO_PCC);
@@ -314,28 +358,48 @@ bool Adafruit_OV7670::begin() {
   pinPeripheral(PIN_PCC_D6, PIO_PCC);
   pinPeripheral(PIN_PCC_D7, PIO_PCC);
 
-  PCC->MR.reg = PCC_MR_ISIZE(0x00) // 8 bit data
-              | PCC_MR_DSIZE(0x02) // 32 bits per transfer
-              | PCC_MR_CID(0x01);  // reset on falling edge of DEN1 (vsync)
-  PCC->MR.bit.PCEN = 1;            // enable
+  MCLK->APBDMASK.bit.PCC_ = 1; // Enable PCC clock
+Serial.println("3"); Serial.flush();
+  PCC->MR.reg = PCC_MR_CID(0x1)   | // Clear on falling edge of DEN1 (vsync)
+                PCC_MR_ISIZE(0x0) | // 8 bit data
+                PCC_MR_DSIZE(0x0);  // "1 data" at a time
+  // DO NOT ENABLE YET
+
+//  PCC->MR.reg = PCC_MR_ISIZE(0x00) // 8 bit data
+//              | PCC_MR_DSIZE(0x02) // 32 bits per transfer
+//              | PCC_MR_CID(0x01);  // reset on falling edge of DEN1 (vsync)
 
   // Set up PCC DMA ---------------
 
-  memset(datamem, 0, sizeof datamem);
+Serial.println("4"); Serial.flush();
+  memset((void *)datamem, 0, sizeof datamem);
 
-  pccDMA.setTrigger(PCC_DMAC_ID_RX);
-  pccDMA.setAction(DMA_TRIGGER_ACTON_BEAT);
+Serial.println("5"); Serial.flush();
   stat = pccDMA.allocate();
+Serial.println("5a"); Serial.flush();
+  pccDMA.setAction(DMA_TRIGGER_ACTON_BEAT);
+Serial.println("5b"); Serial.flush();
+  pccDMA.setTrigger(PCC_DMAC_ID_RX);
+Serial.println("5c"); Serial.flush();
+  pccDMA.setCallback(callback);
 
+Serial.println("6"); Serial.flush();
   pccDesc1 = pccDMA.addDescriptor(
                (void *)(&PCC->RHR.reg), // move data from here
-               datamem,                 // to here
-               320 * 240,               // this many...
-               DMA_BEAT_SIZE_WORD,      // bytes/hword/words
+               (void *)datamem,         // to here
+               320 * 240 * 2,           // this many...
+               DMA_BEAT_SIZE_BYTE,      // bytes/hword/words
                false,                   // increment source addr?
                true);                   // increment dest addr?
 
+Serial.println("7"); Serial.flush();
+// Wouldn't it make more sense to use the IMR register for this?
+// I mean this works, sure, but ?
   attachInterrupt(PIN_PCC_DEN1, startPCC, FALLING);
+
+Serial.println("8"); Serial.flush();
+  PCC->MR.bit.PCEN = 1; // Enable PCC
+Serial.println("9"); Serial.flush();
 
   return true;
 }
